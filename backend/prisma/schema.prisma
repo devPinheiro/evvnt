@@ -1,0 +1,637 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  ONGOING
+  ENDED
+  ARCHIVED
+  CANCELLED
+}
+
+enum EventRole {
+  OWNER
+  CO_HOST
+  STAFF
+}
+
+enum RsvpStatus {
+  NOT_SENT
+  INVITED
+  RSVP_YES
+  RSVP_NO
+  RSVP_MAYBE
+  ARRIVED
+  NO_SHOW
+}
+
+enum PaymentProvider {
+  PAYSTACK
+}
+
+enum PaymentStatus {
+  INITIATED
+  SUCCEEDED
+  FAILED
+}
+
+enum TicketOrderStatus {
+  INITIATED
+  PAID
+  CANCELLED
+  REFUNDED
+}
+
+enum VendorType {
+  CATERING
+  DECORATION
+  PHOTOGRAPHY
+  VIDEOGRAPHY
+  DJ_MUSIC
+  MC
+  SECURITY
+  TRANSPORT
+  VENUE
+  PRINT
+  OTHER
+}
+
+enum VendorEngagementStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+}
+
+enum VendorInvoiceStatus {
+  SUBMITTED
+  APPROVED
+  PAID
+  REJECTED
+}
+
+enum FinanceEntryType {
+  INCOME
+  EXPENSE
+}
+
+enum FinanceStatus {
+  LOGGED
+  PENDING_PAYMENT
+  PAID_MANUAL
+  PAID_PAYSTACK
+}
+
+enum GiftStatus {
+  INITIATED
+  SUCCEEDED
+  FAILED
+}
+
+enum GiftPayoutStatus {
+  REQUESTED
+  PAID
+  FAILED
+}
+
+enum GalleryVisibility {
+  PUBLIC
+  GUEST_ONLY
+  PASSWORD
+}
+
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+enum AuthOtpPurpose {
+  EMAIL_VERIFY
+  LOGIN_PASSWORDLESS
+}
+
+model Organisation {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users        User[]
+  events       Event[]
+  auditLogs    AuditLog[]
+  Notification Notification[]
+}
+
+model User {
+  id               String    @id @default(cuid())
+  organisationId   String
+  email            String
+  name             String?
+  passwordHash     String?
+  emailVerifiedAt  DateTime?
+  pendingEmail     String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  organisation              Organisation             @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  memberships               EventMembership[]
+  auditLogs                 AuditLog[]               @relation("AuditActor")
+  refreshTokens             RefreshToken[]
+  CheckIn                   CheckIn[]
+  GalleryAsset              GalleryAsset[]
+  Notification              Notification[]
+  emailVerificationTokens   EmailVerificationToken[]
+  passwordResetTokens       PasswordResetToken[]
+  authOtps                  AuthOtp[]
+
+  @@unique([organisationId, email])
+}
+
+model EmailVerificationToken {
+  id          String    @id @default(cuid())
+  userId      String
+  tokenHash   String    @unique
+  /// When set, verifying this token moves `User.email` to this address (email change).
+  targetEmail String?
+  expiresAt   DateTime
+  consumedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  consumedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model AuthOtp {
+  id         String          @id @default(cuid())
+  userId     String
+  purpose    AuthOtpPurpose
+  codeHash   String
+  expiresAt  DateTime
+  attempts   Int             @default(0)
+  consumedAt DateTime?
+  createdAt  DateTime        @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, purpose, expiresAt])
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String
+  revokedAt DateTime?
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+}
+
+model Event {
+  id             String      @id @default(cuid())
+  organisationId String
+  name           String
+  slug           String
+  description    String?
+  coverImageUrl  String?
+  startsAt       DateTime?
+  endsAt         DateTime?
+  timezone       String?
+  location       String?
+  isOnline       Boolean     @default(false)
+  status         EventStatus @default(DRAFT)
+  publishedAt    DateTime?
+  cancelledAt    DateTime?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  organisation    Organisation      @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  memberships     EventMembership[]
+  auditLogs       AuditLog[]        @relation("AuditEvent")
+  Guest           Guest[]
+  Invite          Invite[]
+  RSVP            RSVP[]
+  TicketTier      TicketTier[]
+  TicketOrder     TicketOrder[]
+  Ticket          Ticket[]
+  CheckIn         CheckIn[]
+  vendors         Vendor[]
+  financeEntries  FinanceEntry[]
+  giftSettings    GiftSettings?
+  gifts           Gift[]
+  giftPayouts     GiftPayout[]
+  gallerySettings GallerySettings?
+  galleryAssets   GalleryAsset[]
+  plannerSettings EventPlannerSettings?
+
+  @@unique([organisationId, slug])
+}
+
+/// Per-event Event Planner (Module 09): hall calculator + cost estimator persisted state (JSON).
+model EventPlannerSettings {
+  id        String   @id @default(cuid())
+  eventId   String   @unique
+  hallState Json     @default("{}")
+  costState Json     @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+}
+
+model GiftSettings {
+  id               String   @id @default(cuid())
+  eventId          String   @unique
+  isEnabled        Boolean  @default(false)
+  hostDisplayName  String?
+  hostPhotoUrl     String?
+  pageMessage      String?
+  suggestedAmounts Int[]    @default([])
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+}
+
+model Gift {
+  id              String     @id @default(cuid())
+  eventId         String
+  amountNgn       Int
+  senderName      String?
+  senderEmail     String?
+  senderPhone     String?
+  isAnonymous     Boolean    @default(false)
+  message         String?
+  status          GiftStatus @default(INITIATED)
+  paystackRef     String?    @unique
+  providerEventId String?
+  createdAt       DateTime   @default(now())
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId, createdAt])
+}
+
+model GiftPayout {
+  id          String           @id @default(cuid())
+  eventId     String
+  amountNgn   Int
+  status      GiftPayoutStatus @default(REQUESTED)
+  requestedAt DateTime         @default(now())
+  paidAt      DateTime?
+  metadata    Json?
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId, requestedAt])
+}
+
+model GallerySettings {
+  id                 String            @id @default(cuid())
+  eventId            String            @unique
+  guestUploadEnabled Boolean           @default(false)
+  approvalRequired   Boolean           @default(true)
+  watermarkEnabled   Boolean           @default(true)
+  visibility         GalleryVisibility @default(GUEST_ONLY)
+  passwordHash       String?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+}
+
+model GalleryAsset {
+  id           String    @id @default(cuid())
+  eventId      String
+  uploadedBy   String?
+  sourceUrl    String
+  thumbnailUrl String?
+  isApproved   Boolean   @default(false)
+  approvedAt   DateTime?
+  metadata     Json?
+  createdAt    DateTime  @default(now())
+
+  event    Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  uploader User? @relation(fields: [uploadedBy], references: [id], onDelete: SetNull)
+
+  @@index([eventId, createdAt])
+  @@index([eventId, isApproved])
+}
+
+model Notification {
+  id             String              @id @default(cuid())
+  organisationId String
+  userId         String
+  channel        NotificationChannel
+  title          String
+  body           String?
+  data           Json?
+  status         NotificationStatus  @default(PENDING)
+  readAt         DateTime?
+  sentAt         DateTime?
+  error          String?
+  retryCount     Int                 @default(0)
+  nextAttemptAt  DateTime?
+  lastAttemptAt  DateTime?
+  createdAt      DateTime            @default(now())
+
+  organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([organisationId, createdAt])
+  @@index([status, channel, nextAttemptAt])
+}
+
+model Vendor {
+  id           String                 @id @default(cuid())
+  eventId      String
+  name         String
+  type         VendorType
+  email        String?
+  phone        String?
+  agreedFeeNgn Int
+  status       VendorEngagementStatus @default(PENDING)
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+
+  event          Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  tasks          VendorTask[]
+  milestones     VendorMilestone[]
+  invoices       VendorInvoice[]
+  financeEntries FinanceEntry[]
+
+  @@index([eventId, createdAt])
+}
+
+model VendorTask {
+  id          String    @id @default(cuid())
+  vendorId    String
+  title       String
+  description String?
+  dueAt       DateTime?
+  isCompleted Boolean   @default(false)
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  vendor Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@index([vendorId, createdAt])
+}
+
+model VendorMilestone {
+  id        String    @id @default(cuid())
+  vendorId  String
+  title     String
+  amountNgn Int
+  dueAt     DateTime?
+  isPaid    Boolean   @default(false)
+  paidAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  vendor Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@index([vendorId, createdAt])
+}
+
+model VendorInvoice {
+  id        String              @id @default(cuid())
+  vendorId  String
+  amountNgn Int
+  note      String?
+  status    VendorInvoiceStatus @default(SUBMITTED)
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+
+  vendor Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@index([vendorId, createdAt])
+}
+
+model FinanceEntry {
+  id          String           @id @default(cuid())
+  eventId     String
+  vendorId    String?
+  type        FinanceEntryType
+  status      FinanceStatus    @default(LOGGED)
+  category    String?
+  amountNgn   Int
+  description String?
+  metadata    Json?
+  paidAt      DateTime?
+  createdAt   DateTime         @default(now())
+
+  event  Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  vendor Vendor? @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+
+  @@index([eventId, createdAt])
+  @@index([vendorId])
+}
+
+model Guest {
+  id        String     @id @default(cuid())
+  eventId   String
+  name      String
+  email     String?
+  phone     String?
+  groups    String[]   @default([])
+  status    RsvpStatus @default(NOT_SENT)
+  plusOnes  Int        @default(0)
+  tableNo   String?
+  notes     String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  event   Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  invites Invite[]
+  rsvps   RSVP[]
+
+  @@index([eventId, createdAt])
+  @@index([eventId, email])
+  @@index([eventId, phone])
+}
+
+model Invite {
+  id        String    @id @default(cuid())
+  eventId   String
+  guestId   String?
+  token     String    @unique
+  channel   String?
+  sentAt    DateTime?
+  openedAt  DateTime?
+  createdAt DateTime  @default(now())
+
+  event Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  guest Guest? @relation(fields: [guestId], references: [id], onDelete: SetNull)
+  rsvps RSVP[]
+
+  @@index([eventId, createdAt])
+  @@index([guestId])
+}
+
+model RSVP {
+  id         String     @id @default(cuid())
+  eventId    String
+  inviteId   String
+  guestId    String?
+  status     RsvpStatus
+  guestName  String?
+  guestEmail String?
+  guestPhone String?
+  message    String?
+  plusOnes   Int        @default(0)
+  metadata   Json?
+  createdAt  DateTime   @default(now())
+
+  event  Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  invite Invite @relation(fields: [inviteId], references: [id], onDelete: Cascade)
+  guest  Guest? @relation(fields: [guestId], references: [id], onDelete: SetNull)
+
+  @@index([eventId, createdAt])
+  @@index([inviteId])
+}
+
+model EventMembership {
+  id              String    @id @default(cuid())
+  eventId         String
+  userId          String
+  role            EventRole
+  // Granular module permissions (bitset or JSON is fine for MVP; refine later)
+  permissionsJson Json?
+  createdAt       DateTime  @default(now())
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+}
+
+model AuditLog {
+  id             String   @id @default(cuid())
+  organisationId String
+  eventId        String?
+  actorUserId    String?
+  action         String
+  entityType     String?
+  entityId       String?
+  metadata       Json?
+  createdAt      DateTime @default(now())
+
+  organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  event        Event?       @relation("AuditEvent", fields: [eventId], references: [id], onDelete: SetNull)
+  actor        User?        @relation("AuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([organisationId, createdAt])
+  @@index([eventId, createdAt])
+  @@index([actorUserId, createdAt])
+}
+
+model PaymentEvent {
+  id              String          @id @default(cuid())
+  provider        PaymentProvider
+  providerEventId String
+  type            String
+  payload         Json
+  receivedAt      DateTime        @default(now())
+
+  @@unique([provider, providerEventId])
+  @@index([provider, receivedAt])
+}
+
+model TicketTier {
+  id            String    @id @default(cuid())
+  eventId       String
+  name          String
+  description   String?
+  priceNgn      Int // store in kobo? for MVP store in naira; keep consistent later
+  quantityTotal Int
+  quantitySold  Int       @default(0)
+  saleStartsAt  DateTime?
+  saleEndsAt    DateTime?
+  perOrderLimit Int       @default(10)
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  event  Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  orders TicketOrder[]
+
+  @@index([eventId, createdAt])
+}
+
+model TicketOrder {
+  id           String            @id @default(cuid())
+  eventId      String
+  ticketTierId String
+  buyerEmail   String?
+  buyerPhone   String?
+  quantity     Int
+  amountNgn    Int
+  paystackRef  String?           @unique
+  status       TicketOrderStatus @default(INITIATED)
+  paidAt       DateTime?
+  createdAt    DateTime          @default(now())
+
+  event      Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  ticketTier TicketTier @relation(fields: [ticketTierId], references: [id], onDelete: Cascade)
+  tickets    Ticket[]
+
+  @@index([eventId, createdAt])
+}
+
+model Ticket {
+  id       String   @id @default(cuid())
+  eventId  String
+  orderId  String
+  qrToken  String   @unique
+  issuedAt DateTime @default(now())
+
+  event    Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  order    TicketOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  checkIns CheckIn[]
+
+  @@index([eventId, issuedAt])
+}
+
+model CheckIn {
+  id              String   @id @default(cuid())
+  eventId         String
+  ticketId        String
+  scannedByUserId String?
+  scannedAt       DateTime @default(now())
+
+  event     Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  ticket    Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  scannedBy User?  @relation(fields: [scannedByUserId], references: [id], onDelete: SetNull)
+
+  @@unique([ticketId])
+  @@index([eventId, scannedAt])
+}

@@ -1,0 +1,509 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-evvnt-api-v1",
+    "name": "Evvnt API v1",
+    "description": "Import alongside environment or set collection variables: `baseUrl` (e.g. http://localhost:4000), `accessToken` (Bearer from login/signup). Optional: `eventId`, `guestId`, `vendorId`, `assetId`, `rsvpToken`.\n\nOpenAPI: `GET {{baseUrl}}/api/openapi.json` · Swagger UI: `{{baseUrl}}/api/docs`",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:4000" },
+    { "key": "accessToken", "value": "" },
+    { "key": "orgId", "value": "" },
+    { "key": "eventId", "value": "" },
+    { "key": "guestId", "value": "" },
+    { "key": "vendorId", "value": "" },
+    { "key": "assetId", "value": "" },
+    { "key": "rsvpToken", "value": "" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "GET /health",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/health"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "POST /api/v1/auth/signup",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orgName\": \"My Org\",\n  \"email\": \"you@example.com\",\n  \"password\": \"password12\",\n  \"name\": \"You\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/auth/signup"
+          }
+        },
+        {
+          "name": "POST /api/v1/auth/login",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orgId\": \"{{orgId}}\",\n  \"email\": \"you@example.com\",\n  \"password\": \"password12\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/auth/login"
+          }
+        },
+        {
+          "name": "POST /api/v1/auth/refresh",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"<paste refresh token>\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/auth/refresh"
+          }
+        },
+        {
+          "name": "POST /api/v1/auth/logout",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"<paste refresh token>\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/auth/logout"
+          }
+        },
+        {
+          "name": "GET /api/v1/auth/me",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/auth/me"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Events",
+      "item": [
+        {
+          "name": "GET /api/v1/events",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/events" }
+        },
+        {
+          "name": "POST /api/v1/events",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Wedding Reception\",\n  \"timezone\": \"Africa/Lagos\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/events"
+          }
+        },
+        {
+          "name": "GET /api/v1/events/:eventId",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/events/{{eventId}}" }
+        },
+        {
+          "name": "PUT /api/v1/events/:eventId",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{}" },
+            "url": "{{baseUrl}}/api/v1/events/{{eventId}}"
+          }
+        },
+        {
+          "name": "POST /api/v1/events/:eventId/publish",
+          "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/events/{{eventId}}/publish" }
+        },
+        {
+          "name": "POST /api/v1/events/:eventId/cancel",
+          "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/events/{{eventId}}/cancel" }
+        },
+        {
+          "name": "POST /api/v1/events/:eventId/clone",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{}" },
+            "url": "{{baseUrl}}/api/v1/events/{{eventId}}/clone"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Guests",
+      "item": [
+        {
+          "name": "GET /api/v1/events/:eventId/guests",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/events/{{eventId}}/guests" }
+        },
+        {
+          "name": "POST /api/v1/events/:eventId/guests",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ada Lovelace\",\n  \"email\": \"ada@example.com\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/events/{{eventId}}/guests"
+          }
+        },
+        {
+          "name": "POST /api/v1/events/:eventId/guests/dedupe-preview",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"candidates\": [{ \"email\": \"ada@example.com\" }]\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/events/{{eventId}}/guests/dedupe-preview"
+          }
+        },
+        {
+          "name": "POST /api/v1/events/:eventId/guests/:guestId/invite",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{}" },
+            "url": "{{baseUrl}}/api/v1/events/{{eventId}}/guests/{{guestId}}/invite"
+          }
+        },
+        {
+          "name": "POST /api/v1/events/:eventId/guests/invite-link",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{}" },
+            "url": "{{baseUrl}}/api/v1/events/{{eventId}}/guests/invite-link"
+          }
+        }
+      ]
+    },
+    {
+      "name": "RSVP (public)",
+      "item": [
+        {
+          "name": "POST /api/v1/rsvp/:token",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"RSVP_YES\",\n  \"guestName\": \"Guest\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/rsvp/{{rsvpToken}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "POST /api/v1/payments/paystack/webhook",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-paystack-signature", "value": "<hmac>", "description": "Paystack HMAC of raw body" }
+            ],
+            "body": { "mode": "raw", "raw": "{}" },
+            "url": "{{baseUrl}}/api/v1/payments/paystack/webhook"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Ticketing",
+      "item": [
+        {
+          "name": "POST /api/v1/events/:eventId/ticketing/checkout (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ticketTierId\": \"<tier id>\",\n  \"quantity\": 1\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/events/{{eventId}}/ticketing/checkout"
+          }
+        },
+        {
+          "name": "GET /api/v1/events/:eventId/ticketing/tiers",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/events/{{eventId}}/ticketing/tiers" }
+        },
+        {
+          "name": "POST /api/v1/events/:eventId/ticketing/tiers",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"VIP\",\n  \"priceNgn\": 500000,\n  \"quantityTotal\": 100\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/events/{{eventId}}/ticketing/tiers"
+          }
+        },
+        {
+          "name": "POST /api/v1/events/:eventId/ticketing/scan",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"qrToken\": \"<token from ticket>\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/events/{{eventId}}/ticketing/scan"
+          }
+        },
+        {
+          "name": "GET /api/v1/events/:eventId/ticketing/offline-bundle",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/events/{{eventId}}/ticketing/offline-bundle"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Vendors",
+      "item": [
+        {
+          "name": "GET /api/v1/events/:eventId/vendors",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/events/{{eventId}}/vendors" }
+        },
+        {
+          "name": "POST /api/v1/events/:eventId/vendors",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Cater Co\",\n  \"type\": \"CATERING\",\n  \"agreedFeeNgn\": 2000000\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/events/{{eventId}}/vendors"
+          }
+        },
+        {
+          "name": "POST /api/v1/events/:eventId/vendors/:vendorId/tasks",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Tasting session\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/events/{{eventId}}/vendors/{{vendorId}}/tasks"
+          }
+        },
+        {
+          "name": "POST /api/v1/events/:eventId/vendors/:vendorId/milestones",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Deposit\",\n  \"amountNgn\": 500000\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/events/{{eventId}}/vendors/{{vendorId}}/milestones"
+          }
+        },
+        {
+          "name": "POST /api/v1/events/:eventId/vendors/:vendorId/invoices",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amountNgn\": 1000000\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/events/{{eventId}}/vendors/{{vendorId}}/invoices"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Finance",
+      "item": [
+        {
+          "name": "GET /api/v1/events/:eventId/finance/ledger",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/events/{{eventId}}/finance/ledger"
+          }
+        },
+        {
+          "name": "POST /api/v1/events/:eventId/finance/expense",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amountNgn\": 50000,\n  \"category\": \"Logistics\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/events/{{eventId}}/finance/expense"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Event Planner (Module 09)",
+      "item": [
+        {
+          "name": "GET /api/v1/events/:eventId/planner",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/events/{{eventId}}/planner"
+          }
+        },
+        {
+          "name": "PUT /api/v1/events/:eventId/planner",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hallState\": {\n    \"hallLengthM\": 40,\n    \"hallWidthM\": 25,\n    \"hallGuestCount\": 200,\n    \"tableShape\": \"ROUND\",\n    \"roundDiameterM\": 1.8,\n    \"rectangularTableWidthM\": 1.8,\n    \"rectangularTableLengthM\": 0.9,\n    \"seatsPerTable\": 8,\n    \"stageAreaM2\": 24,\n    \"aisleCount\": 2,\n    \"headTableZone\": true,\n    \"barBuffetZone\": true,\n    \"danceFloor\": true\n  },\n  \"costState\": {\n    \"costGuestCount\": 200,\n    \"contingencyPercent\": 10,\n    \"categories\": {\n      \"FOOD\": [{ \"id\": \"a1\", \"name\": \"Main course\", \"unitCostNgn\": 8500, \"qtyPerGuest\": 1 }],\n      \"DRINKS\": [],\n      \"SOUVENIRS\": [],\n      \"LOGISTICS\": []\n    }\n  }\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/events/{{eventId}}/planner"
+          }
+        },
+        {
+          "name": "POST /api/v1/events/:eventId/planner/push-budget",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"mode\": \"replace\"\n}" },
+            "url": "{{baseUrl}}/api/v1/events/{{eventId}}/planner/push-budget"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Gifts",
+      "item": [
+        {
+          "name": "POST /api/v1/events/:eventId/gifts/checkout (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amountNgn\": 5000\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/events/{{eventId}}/gifts/checkout"
+          }
+        },
+        {
+          "name": "PUT /api/v1/events/:eventId/gifts/settings",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isEnabled\": true\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/events/{{eventId}}/gifts/settings"
+          }
+        },
+        {
+          "name": "GET /api/v1/events/:eventId/gifts/ledger",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/events/{{eventId}}/gifts/ledger" }
+        },
+        {
+          "name": "POST /api/v1/events/:eventId/gifts/payouts",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"amountNgn\": 10000\n}" },
+            "url": "{{baseUrl}}/api/v1/events/{{eventId}}/gifts/payouts"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Gallery",
+      "item": [
+        {
+          "name": "PUT /api/v1/events/:eventId/gallery/settings",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{}" },
+            "url": "{{baseUrl}}/api/v1/events/{{eventId}}/gallery/settings"
+          }
+        },
+        {
+          "name": "POST /api/v1/events/:eventId/gallery/assets",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sourceUrl\": \"https://example.com/photo.jpg\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/events/{{eventId}}/gallery/assets"
+          }
+        },
+        {
+          "name": "POST /api/v1/events/:eventId/gallery/assets/:assetId/approve",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/v1/events/{{eventId}}/gallery/assets/{{assetId}}/approve"
+          }
+        },
+        {
+          "name": "GET /api/v1/events/:eventId/gallery/assets",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/events/{{eventId}}/gallery/assets" }
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "GET /api/v1/notifications",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/notifications" }
+        },
+        {
+          "name": "POST /api/v1/notifications/mark-read",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notificationIds\": [\"<id>\"]\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/notifications/mark-read"
+          }
+        }
+      ]
+    }
+  ]
+}
