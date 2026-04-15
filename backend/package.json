@@ -3,9 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsc -p tsconfig.json",
+    "build": "prisma generate && tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "worker:notifications": "tsx src/workers/notifications.worker.ts",
     "lint": "eslint .",
@@ -35,6 +38,7 @@
     "morgan": "^1.10.1",
     "nanoid": "^5.1.6",
     "nodemailer": "^7.0.6",
+    "prisma": "6.16.1",
     "reflect-metadata": "^0.2.2",
     "swagger-ui-express": "^5.0.1",
     "zod": "^4.1.5"
@@ -54,7 +58,6 @@
     "@vitest/coverage-v8": "^3.2.4",
     "eslint": "^9.33.0",
     "prettier": "^3.6.2",
-    "prisma": "6.16.1",
     "supertest": "^7.1.4",
     "tsx": "^4.20.5",
     "typescript": "^5.9.2",

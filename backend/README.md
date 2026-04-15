@@ -79,6 +79,21 @@ cd backend
 npm run worker:notifications
 ```
 
+## Deploy (Railway)
+
+1. **New project** on [Railway](https://railway.app) → **Deploy from GitHub** → select this repo.
+2. **Root directory:** set the service **Root Directory** to `backend` (the folder that contains `package.json` and `railway.json`).
+3. **PostgreSQL:** add a **PostgreSQL** plugin (or database) and **link** it to the API service so Railway injects `DATABASE_URL`.
+4. **Variables** (service → **Variables**), set at least:
+   - `JWT_ACCESS_SECRET` — long random string (16+ chars)
+   - `JWT_REFRESH_SECRET` — different long random string
+   - `APP_PUBLIC_URL` — public URL of the API (e.g. `https://your-service.up.railway.app`) for auth email links
+   - Optional: `PAYSTACK_SECRET_KEY`, SMTP vars, etc. (see `.env.example`)
+
+`railway.json` runs **`npx prisma migrate deploy`** as **pre-deploy**, then **`npm start`**. The app listens on **`PORT`** (set automatically by Railway).
+
+Health check: `GET /health` (configured in `railway.json`).
+
 ## API Docs
 
 - Human-readable list and full request index: `docs/API.md`
