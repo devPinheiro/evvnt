@@ -69,11 +69,15 @@ async function tick() {
         data: { status: NotificationStatus.SENT, sentAt: new Date(), error: null, nextAttemptAt: null },
       });
     } else {
+      const error =
+        result.reason === 'SMTP_SEND_FAILED'
+          ? `SMTP_SEND_FAILED: ${result.message}`
+          : result.reason;
       await prisma.notification.update({
         where: { id: n.id },
         data: {
           status: NotificationStatus.FAILED,
-          error: result.reason,
+          error,
           retryCount: n.retryCount + 1,
           nextAttemptAt: new Date(Date.now() + backoffMs(n.retryCount)),
         },

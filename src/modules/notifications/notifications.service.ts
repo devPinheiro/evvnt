@@ -50,11 +50,15 @@ export class NotificationsService {
     const result = await sendEmail({ to: input.toEmail, subject: input.subject, text: input.text });
 
     if (!result.sent) {
+      const error =
+        result.reason === 'SMTP_SEND_FAILED'
+          ? `SMTP_SEND_FAILED: ${result.message}`
+          : result.reason;
       await prisma.notification.update({
         where: { id: notif.id },
-        data: { status: NotificationStatus.FAILED, error: result.reason },
+        data: { status: NotificationStatus.FAILED, error },
       });
-      return { notification: notif, delivered: false as const, reason: result.reason };
+      return { notification: notif, delivered: false as const, reason: error };
     }
 
     const updated = await prisma.notification.update({

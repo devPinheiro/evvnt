@@ -72,7 +72,7 @@ In CI, fail when the database must be present: `REQUIRE_E2E_DB=1 npm test`.
 
 ## Notifications worker (email retries)
 
-Email delivery is stored in the `Notification` table. If SMTP is configured, email notifications are attempted immediately. Failed notifications can be retried by running the worker:
+Email delivery is stored in the `Notification` table. If SMTP is configured (see **Mailgun** notes in `.env.example`: US `smtp.mailgun.org`, EU `smtp.eu.mailgun.org`, full `postmaster@…` as `SMTP_USER`, verified `EMAIL_FROM` domain), email notifications are attempted immediately. Failed sends store `SMTP_SEND_FAILED: …` on the notification row. Failed notifications can be retried by running the worker:
 
 ```bash
 cd backend
