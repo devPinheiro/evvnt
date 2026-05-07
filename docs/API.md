@@ -6,7 +6,7 @@ Base URL (local): `http://localhost:4000`
 
 - **Swagger UI:** `GET /api/docs` (interactive docs while the server is running)
 - **OpenAPI JSON:** `GET /api/openapi.json` (machine-readable spec; import into Postman via *Import → Link* or paste URL)
-- **Postman collection (checked in):** `docs/postman/Evvnt.postman_collection.json` — Import in Postman (*File → Import*). Set collection variables `baseUrl`, `accessToken`, and optional `eventId`, `guestId`, `vendorId`, `assetId`, `rsvpToken`, `orgId`.
+- **Postman collection (checked in):** `docs/postman/Evvnt.postman_collection.json` — Import in Postman (*File → Import*). Set collection variables `baseUrl`, `accessToken`, and optional `eventId`, `guestId`, `vendorId`, `assetId`, `rsvpToken`.
 
 Authenticated routes expect header: `Authorization: Bearer <accessToken>`.
 
@@ -66,8 +66,8 @@ Authenticated routes expect header: `Authorization: Bearer <accessToken>`.
 
 ## Auth
 
-- `POST /api/v1/auth/signup`
-- `POST /api/v1/auth/login`
+- `POST /api/v1/auth/signup` — creates an organisation and first user; **email must be globally unique**.
+- `POST /api/v1/auth/login` — **email + password** (no organisation id).
 - `POST /api/v1/auth/refresh`
 - `POST /api/v1/auth/logout`
 - `GET /api/v1/auth/me`

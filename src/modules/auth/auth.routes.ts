@@ -61,7 +61,6 @@ export function buildAuthRouter(authService: AuthService) {
     try {
       const body = z
         .object({
-          orgId: z.string().min(1),
           email: z.string().email(),
           password: z.string().min(8),
         })
@@ -81,7 +80,7 @@ export function buildAuthRouter(authService: AuthService) {
 
   router.post('/otp/request', strictLimiter, async (req, res, next) => {
     try {
-      const body = z.object({ orgId: z.string().min(1), email: z.string().email() }).parse(req.body);
+      const body = z.object({ email: z.string().email() }).parse(req.body);
       await authService.requestLoginOtp(body);
       res.json(ok({ ok: true }));
     } catch (err) {
@@ -93,7 +92,6 @@ export function buildAuthRouter(authService: AuthService) {
     try {
       const body = z
         .object({
-          orgId: z.string().min(1),
           email: z.string().email(),
           code: z.string().min(4).max(12),
         })
@@ -135,7 +133,6 @@ export function buildAuthRouter(authService: AuthService) {
     try {
       const body = z
         .object({
-          orgId: z.string().min(1),
           email: z.string().email(),
           code: z.string().min(4).max(12),
         })
@@ -150,7 +147,7 @@ export function buildAuthRouter(authService: AuthService) {
 
   router.post('/verification/resend', strictLimiter, async (req, res, next) => {
     try {
-      const body = z.object({ orgId: z.string().min(1), email: z.string().email() }).parse(req.body);
+      const body = z.object({ email: z.string().email() }).parse(req.body);
       await authService.resendVerification(body);
       res.json(ok({ ok: true }));
     } catch (err) {
@@ -160,7 +157,7 @@ export function buildAuthRouter(authService: AuthService) {
 
   router.post('/password/forgot', strictLimiter, async (req, res, next) => {
     try {
-      const body = z.object({ orgId: z.string().min(1), email: z.string().email() }).parse(req.body);
+      const body = z.object({ email: z.string().email() }).parse(req.body);
       await authService.requestPasswordReset(body);
       res.json(ok({ ok: true }));
     } catch (err) {

@@ -33,6 +33,15 @@ export class AuthService {
     const email = input.email.trim().toLowerCase();
     const passwordHash = await hashPassword(input.password);
 
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) {
+      throw new AppError({
+        status: 409,
+        code: 'EMAIL_IN_USE',
+        message: 'An account with this email already exists',
+      });
+    }
+
     const org = await prisma.organisation.create({
       data: { name: input.orgName.trim() },
     });
@@ -58,11 +67,11 @@ export class AuthService {
     }
   }
 
-  async login(input: { orgId: string; email: string; password: string }) {
+  async login(input: { email: string; password: string }) {
     const email = input.email.trim().toLowerCase();
 
-    const user = await prisma.user.findFirst({
-      where: { organisationId: input.orgId, email },
+    const user = await prisma.user.findUnique({
+      where: { email },
     });
 
     if (!user || !user.passwordHash) {
@@ -86,10 +95,10 @@ export class AuthService {
     return { user, tokens };
   }
 
-  async requestLoginOtp(input: { orgId: string; email: string }) {
+  async requestLoginOtp(input: { email: string }) {
     const email = input.email.trim().toLowerCase();
-    const user = await prisma.user.findFirst({
-      where: { organisationId: input.orgId, email },
+    const user = await prisma.user.findUnique({
+      where: { email },
     });
     if (!user || !user.emailVerifiedAt) {
       // Do not reveal whether the account exists
@@ -115,15 +124,15 @@ export class AuthService {
     return { ok: true as const };
   }
 
-  async verifyLoginOtp(input: { orgId: string; email: string; code: string }) {
+  async verifyLoginOtp(input: { email: string; code: string }) {
     const email = input.email.trim().toLowerCase();
     const code = normalizeOtpCode(input.code);
     if (code.length !== 6 || !/^\d{6}$/.test(code)) {
       throw new AppError({ status: 400, code: 'INVALID_CODE', message: 'Invalid code' });
     }
 
-    const user = await prisma.user.findFirst({
-      where: { organisationId: input.orgId, email },
+    const user = await prisma.user.findUnique({
+      where: { email },
     });
     if (!user || !user.emailVerifiedAt) {
       throw new AppError({ status: 401, code: 'INVALID_CREDENTIALS', message: 'Invalid credentials' });
@@ -180,15 +189,15 @@ export class AuthService {
     return { ok: true as const };
   }
 
-  async verifyEmailWithOtp(input: { orgId: string; email: string; code: string }) {
+  async verifyEmailWithOtp(input: { email: string; code: string }) {
     const email = input.email.trim().toLowerCase();
     const code = normalizeOtpCode(input.code);
     if (code.length !== 6 || !/^\d{6}$/.test(code)) {
       throw new AppError({ status: 400, code: 'INVALID_CODE', message: 'Invalid code' });
     }
 
-    const user = await prisma.user.findFirst({
-      where: { organisationId: input.orgId, email },
+    const user = await prisma.user.findUnique({
+      where: { email },
     });
     if (!user) {
       throw new AppError({ status: 400, code: 'INVALID_CODE', message: 'Invalid or expired code' });
@@ -235,10 +244,10 @@ export class AuthService {
     return { ok: true as const };
   }
 
-  async resendVerification(input: { orgId: string; email: string }) {
+  async resendVerification(input: { email: string }) {
     const email = input.email.trim().toLowerCase();
-    const user = await prisma.user.findFirst({
-      where: { organisationId: input.orgId, email },
+    const user = await prisma.user.findUnique({
+      where: { email },
     });
     if (!user || user.emailVerifiedAt) {
       return { ok: true as const };
@@ -248,10 +257,10 @@ export class AuthService {
     return { ok: true as const };
   }
 
-  async requestPasswordReset(input: { orgId: string; email: string }) {
+  async requestPasswordReset(input: { email: string }) {
     const email = input.email.trim().toLowerCase();
-    const user = await prisma.user.findFirst({
-      where: { organisationId: input.orgId, email },
+    const user = await prisma.user.findUnique({
+      where: { email },
     });
     if (!user?.passwordHash) {
       return { ok: true as const };
@@ -382,10 +391,10 @@ export class AuthService {
     }
 
     const clash = await prisma.user.findFirst({
-      where: { organisationId: input.orgId, email: newEmail, NOT: { id: user.id } },
+      where: { email: newEmail, NOT: { id: user.id } },
     });
     if (clash) {
-      throw new AppError({ status: 409, code: 'EMAIL_IN_USE', message: 'That email is already used in this organisation' });
+      throw new AppError({ status: 409, code: 'EMAIL_IN_USE', message: 'That email is already in use' });
     }
 
     await prisma.emailVerificationToken.deleteMany({
@@ -512,10 +521,10 @@ export class AuthService {
         if (!user) throw new AppError({ status: 400, code: 'INVALID_TOKEN', message: 'Invalid token' });
 
         const clash = await tx.user.findFirst({
-          where: { organisationId: user.organisationId, email: next, NOT: { id: userId } },
+          where: { email: next, NOT: { id: userId } },
         });
         if (clash) {
-          throw new AppError({ status: 409, code: 'EMAIL_IN_USE', message: 'That email is already used in this organisation' });
+          throw new AppError({ status: 409, code: 'EMAIL_IN_USE', message: 'That email is already in use' });
         }
 
         await tx.user.update({

@@ -18,15 +18,25 @@ describe('AuthService (integration)', () => {
     expect(verifyJwt(out.tokens.refreshToken).kind).toBe('refresh');
   });
 
+  it('signup rejects duplicate email', async (ctx) => {
+    if (!db.ready) return ctx.skip();
+    const auth = new AuthService();
+    const email = uniqueEmail('int-dup');
+    await auth.signup({ orgName: 'Org D', email, password: 'password1234' });
+    await expect(auth.signup({ orgName: 'Org D2', email, password: 'password1234' })).rejects.toMatchObject({
+      code: 'EMAIL_IN_USE',
+    });
+  });
+
   it('login succeeds after signup', async (ctx) => {
     if (!db.ready) return ctx.skip();
     const auth = new AuthService();
     const email = uniqueEmail('int-login');
-    const { organisation, user } = await auth.signup({ orgName: 'Org L', email, password: 'password1234' });
+    const { user } = await auth.signup({ orgName: 'Org L', email, password: 'password1234' });
     const vt = `int-vt-${user.id.slice(0, 10)}`;
     await insertKnownEmailVerificationToken(user.id, vt);
     await auth.verifyEmailWithToken(vt);
-    const out = await auth.login({ orgId: organisation.id, email, password: 'password1234' });
+    const out = await auth.login({ email, password: 'password1234' });
     expect(out.user.email).toBe(email);
   });
 

@@ -30,6 +30,8 @@ const EnvSchema = z.object({
   SMTP_USER: optNonEmptyString(),
   SMTP_PASS: optNonEmptyString(),
   EMAIL_FROM: optNonEmptyString(),
+  /** If set, `GET /health/smtp` is enabled when request header `x-smtp-probe-secret` matches (SMTP handshake only; no email sent). */
+  SMTP_HEALTH_SECRET: optNonEmptyString(),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

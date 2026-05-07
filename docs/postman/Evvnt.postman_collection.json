@@ -8,7 +8,6 @@
   "variable": [
     { "key": "baseUrl", "value": "http://localhost:4000" },
     { "key": "accessToken", "value": "" },
-    { "key": "orgId", "value": "" },
     { "key": "eventId", "value": "" },
     { "key": "guestId", "value": "" },
     { "key": "vendorId", "value": "" },
@@ -58,7 +57,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"orgId\": \"{{orgId}}\",\n  \"email\": \"you@example.com\",\n  \"password\": \"password12\"\n}"
+              "raw": "{\n  \"email\": \"you@example.com\",\n  \"password\": \"password12\"\n}"
             },
             "url": "{{baseUrl}}/api/v1/auth/login"
           }

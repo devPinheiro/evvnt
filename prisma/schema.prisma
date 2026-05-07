@@ -137,7 +137,7 @@ model Organisation {
 model User {
   id               String    @id @default(cuid())
   organisationId   String
-  email            String
+  email            String    @unique
   name             String?
   passwordHash     String?
   emailVerifiedAt  DateTime?
@@ -155,8 +155,6 @@ model User {
   emailVerificationTokens   EmailVerificationToken[]
   passwordResetTokens       PasswordResetToken[]
   authOtps                  AuthOtp[]
-
-  @@unique([organisationId, email])
 }
 
 model EmailVerificationToken {
