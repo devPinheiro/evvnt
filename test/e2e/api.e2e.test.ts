@@ -15,6 +15,12 @@ describe('E2E HTTP API', () => {
       expect(res.body).toEqual({ ok: true, data: { status: 'ok' } });
     });
 
+    it('GET /health/smtp without probe secret returns 404', async () => {
+      const res = await request(app).get('/health/smtp').expect(404);
+      expect(res.body.ok).toBe(false);
+      expect(res.body.error?.code).toBe('NOT_FOUND');
+    });
+
     it('GET /api/openapi.json serves OpenAPI document', async () => {
       const res = await request(app).get('/api/openapi.json').expect(200);
       expect(res.body.openapi).toMatch(/^3\./);
@@ -76,7 +82,6 @@ describe('E2E HTTP API', () => {
         .expect(201);
       expect(signup.body.ok).toBe(true);
       expect(signup.body.data.user.emailVerified).toBe(false);
-      const orgId = signup.body.data.organisation.id;
       const userId = signup.body.data.user.id as string;
       const access1 = signup.body.data.tokens.accessToken as string;
       const refresh = signup.body.data.tokens.refreshToken as string;
@@ -91,7 +96,7 @@ describe('E2E HTTP API', () => {
 
       const login = await request(app)
         .post('/api/v1/auth/login')
-        .send({ orgId, email, password })
+        .send({ email, password })
         .expect(200);
       const access2 = login.body.data.tokens.accessToken as string;
       expect(access2).toBeTruthy();

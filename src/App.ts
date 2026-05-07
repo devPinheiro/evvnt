@@ -12,7 +12,9 @@ import swaggerUi from 'swagger-ui-express';
 
 import { errorHandler, notFoundHandler } from './http/errors.js';
 import { openApiDocument } from './openapi/openapiDocument.js';
-import { ok } from './http/response.js';
+import { ok, fail } from './http/response.js';
+import { env } from './config/env.js';
+import { verifySmtpConnection } from './modules/notifications/email.sender.js';
 import { buildAuthRouter } from './modules/auth/auth.routes.js';
 import { buildEventsRouter } from './modules/events/events.routes.js';
 import { buildGuestsRouter, buildPublicRsvpRouter } from './modules/guests/guests.routes.js';
@@ -64,6 +66,13 @@ export function createApp(container?: Container) {
     })
   );
 
+  const smtpProbeLimiter = rateLimit({
+    windowMs: 60_000,
+    limit: 12,
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+
   app.get('/api/openapi.json', (_req, res) => {
     res.json(openApiDocument);
   });
@@ -71,6 +80,29 @@ export function createApp(container?: Container) {
 
   app.get('/health', (_req, res) => {
     res.json(ok({ status: 'ok' as const }));
+  });
+
+  /**
+   * SMTP handshake probe (no email sent). Disabled unless `SMTP_HEALTH_SECRET` is set.
+   * Call with header `x-smtp-probe-secret: <SMTP_HEALTH_SECRET>`.
+   */
+  app.get('/health/smtp', smtpProbeLimiter, async (req, res) => {
+    const expected = env.SMTP_HEALTH_SECRET;
+    const got = req.get('x-smtp-probe-secret');
+    if (!expected || got !== expected) {
+      res.status(404).json(fail('NOT_FOUND', 'Not found'));
+      return;
+    }
+    const v = await verifySmtpConnection();
+    if (v.ok) {
+      res.json(ok({ smtp: 'verified' as const }));
+      return;
+    }
+    const message =
+      v.reason === 'SMTP_NOT_CONFIGURED'
+        ? 'SMTP is not fully configured (host, user, pass, from).'
+        : (v.message ?? 'SMTP handshake failed');
+    res.status(503).json(fail('SMTP_UNHEALTHY', message, { reason: v.reason }));
   });
 
   app.use('/api/v1/auth', buildAuthRouter(c.get(TYPES.AuthService)));

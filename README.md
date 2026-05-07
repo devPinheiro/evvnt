@@ -79,6 +79,16 @@ cd backend
 npm run worker:notifications
 ```
 
+**Auth emails** (verification, OTP, password reset) log delivery failures to stderr as `[evvnt:auth-mail] delivery_failed …` (recipient is partially masked).
+
+**SMTP probe (ops):** set `SMTP_HEALTH_SECRET` in env, then:
+
+```bash
+curl -sS -H "x-smtp-probe-secret: $SMTP_HEALTH_SECRET" "http://localhost:4000/health/smtp"
+```
+
+Returns `{ ok: true, data: { smtp: "verified" } }` when the server can complete an SMTP handshake (no email is sent). If the secret env var is unset or the header does not match, the route responds **404** so the probe is not advertised.
+
 ## Deploy (Railway)
 
 1. **New project** on [Railway](https://railway.app) → **Deploy from GitHub** → select this repo.
@@ -88,7 +98,7 @@ npm run worker:notifications
    - `JWT_ACCESS_SECRET` — long random string (16+ chars)
    - `JWT_REFRESH_SECRET` — different long random string
    - `APP_PUBLIC_URL` — public URL of the API (e.g. `https://your-service.up.railway.app`) for auth email links
-   - Optional: `PAYSTACK_SECRET_KEY`, SMTP vars, etc. (see `.env.example`)
+   - Optional: `PAYSTACK_SECRET_KEY`, SMTP vars, `SMTP_HEALTH_SECRET` (for `/health/smtp` probe — see **Notifications worker**), etc. (see `.env.example`)
 
 `railway.json` runs **`npx prisma migrate deploy`** as **pre-deploy**, then **`npm start`**. The app listens on **`PORT`** (set automatically by Railway).
 

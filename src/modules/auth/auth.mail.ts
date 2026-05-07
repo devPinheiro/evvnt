@@ -1,13 +1,35 @@
-import { sendEmail } from '../notifications/email.sender.js';
+import { sendEmail, type EmailMessage, type SendEmailResult } from '../notifications/email.sender.js';
 import { env } from '../../config/env.js';
 
 function baseUrl() {
   return (env.APP_PUBLIC_URL ?? 'http://localhost:4000').replace(/\/$/, '');
 }
 
+function recipientHint(to: string) {
+  const parts = to.split('@');
+  const domain = parts[1];
+  const local = parts[0] ?? '';
+  if (!domain) return '[invalid]';
+  const prefix = local.length <= 2 ? `${local.slice(0, 1)}*` : `${local.slice(0, 2)}***`;
+  return `${prefix}@${domain}`;
+}
+
+type AuthMailKind = 'verification' | 'email_change' | 'password_reset' | 'login_otp';
+
+async function sendAuthEmail(kind: AuthMailKind, msg: EmailMessage): Promise<SendEmailResult> {
+  const result = await sendEmail(msg);
+  if (!result.sent) {
+    const detail = result.reason === 'SMTP_SEND_FAILED' ? result.message : result.reason;
+    console.warn(
+      `[evvnt:auth-mail] delivery_failed kind=${kind} recipient=${recipientHint(msg.to)} reason=${result.reason} detail=${detail}`,
+    );
+  }
+  return result;
+}
+
 export async function sendVerificationEmail(input: { to: string; token: string; otpCode: string }) {
   const verifyUrl = `${baseUrl()}/api/v1/auth/verify-email?token=${encodeURIComponent(input.token)}`;
-  return sendEmail({
+  return sendAuthEmail('verification', {
     to: input.to,
     subject: 'Verify your Evvnt email',
     text: [
@@ -25,7 +47,7 @@ export async function sendVerificationEmail(input: { to: string; token: string; 
 
 export async function sendEmailChangeVerification(input: { to: string; token: string }) {
   const verifyUrl = `${baseUrl()}/api/v1/auth/verify-email?token=${encodeURIComponent(input.token)}`;
-  return sendEmail({
+  return sendAuthEmail('email_change', {
     to: input.to,
     subject: 'Confirm your new email for Evvnt',
     text: [
@@ -40,7 +62,7 @@ export async function sendEmailChangeVerification(input: { to: string; token: st
 
 export async function sendPasswordResetEmail(input: { to: string; token: string }) {
   const resetUrl = `${baseUrl()}/api/v1/auth/password/reset?token=${encodeURIComponent(input.token)}`;
-  return sendEmail({
+  return sendAuthEmail('password_reset', {
     to: input.to,
     subject: 'Reset your Evvnt password',
     text: [
@@ -54,7 +76,7 @@ export async function sendPasswordResetEmail(input: { to: string; token: string 
 }
 
 export async function sendLoginOtpEmail(input: { to: string; code: string }) {
-  return sendEmail({
+  return sendAuthEmail('login_otp', {
     to: input.to,
     subject: 'Your Evvnt sign-in code',
     text: [

@@ -44,6 +44,7 @@ export const openApiPaths = {
       responses: {
         '201': { description: 'Created' },
         '400': { description: 'Validation / business error' },
+        '409': { description: 'Email already registered' },
       },
     },
   },
@@ -51,7 +52,7 @@ export const openApiPaths = {
   '/api/v1/auth/login': {
     post: {
       tags: ['Auth'],
-      summary: 'Login with org + email + password',
+      summary: 'Login with email + password',
       security: [],
       requestBody: {
         required: true,
@@ -59,9 +60,8 @@ export const openApiPaths = {
           'application/json': {
             schema: {
               type: 'object',
-              required: ['orgId', 'email', 'password'],
+              required: ['email', 'password'],
               properties: {
-                orgId: { type: 'string', minLength: 1 },
                 email: { type: 'string', format: 'email' },
                 password: { type: 'string', minLength: 8 },
               },
@@ -154,8 +154,8 @@ export const openApiPaths = {
           'application/json': {
             schema: {
               type: 'object',
-              required: ['orgId', 'email'],
-              properties: { orgId: { type: 'string' }, email: { type: 'string', format: 'email' } },
+              required: ['email'],
+              properties: { email: { type: 'string', format: 'email' } },
             },
           },
         },
@@ -175,9 +175,8 @@ export const openApiPaths = {
           'application/json': {
             schema: {
               type: 'object',
-              required: ['orgId', 'email', 'code'],
+              required: ['email', 'code'],
               properties: {
-                orgId: { type: 'string' },
                 email: { type: 'string', format: 'email' },
                 code: { type: 'string' },
               },
@@ -231,9 +230,8 @@ export const openApiPaths = {
           'application/json': {
             schema: {
               type: 'object',
-              required: ['orgId', 'email', 'code'],
+              required: ['email', 'code'],
               properties: {
-                orgId: { type: 'string' },
                 email: { type: 'string', format: 'email' },
                 code: { type: 'string' },
               },
@@ -256,8 +254,8 @@ export const openApiPaths = {
           'application/json': {
             schema: {
               type: 'object',
-              required: ['orgId', 'email'],
-              properties: { orgId: { type: 'string' }, email: { type: 'string', format: 'email' } },
+              required: ['email'],
+              properties: { email: { type: 'string', format: 'email' } },
             },
           },
         },
@@ -277,8 +275,8 @@ export const openApiPaths = {
           'application/json': {
             schema: {
               type: 'object',
-              required: ['orgId', 'email'],
-              properties: { orgId: { type: 'string' }, email: { type: 'string', format: 'email' } },
+              required: ['email'],
+              properties: { email: { type: 'string', format: 'email' } },
             },
           },
         },
